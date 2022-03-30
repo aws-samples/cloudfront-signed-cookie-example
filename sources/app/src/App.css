@@ -1,0 +1,15 @@
+.app {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.app-button__container {
+  padding: 16px;
+}
+
+.app-image__container {
+  padding: 16px;
+}
