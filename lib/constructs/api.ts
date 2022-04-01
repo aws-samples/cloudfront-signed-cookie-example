@@ -39,9 +39,6 @@ export class ApiConstruct extends Construct {
       "sources.cookie-handler",
       {
         entry: "sources/cookie-handler/index.ts",
-        bundling: {
-          nodeModules: ["aws-cloudfront-sign"],
-        },
         environment: {
           PRIVATE_KEY_SECRET_COMPLETE_ARN: privateKeySecretCompleteArn,
           DOMAIN_NAME: hostedZone.zoneName,

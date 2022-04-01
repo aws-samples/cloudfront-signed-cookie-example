@@ -1,7 +1,5 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import * as AWS from "aws-sdk";
-// @ts-ignore
-import { getSignedCookies } from "aws-cloudfront-sign";
 
 const secretManager = new AWS.SecretsManager();
 
@@ -36,16 +34,25 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   const privateKeyString = Buffer.from(SecretBinary!.toString()).toString(
     "ascii"
   );
-  const signedCookies = getSignedCookies(`https://asset.${DOMAIN_NAME}/*`, {
-    keypairId: KEY_PAIR_ID,
-    privateKeyString,
-  }) as any;
+
+  // expires in 1 hour
+  const expires = Math.floor(new Date().getTime() / 1000) + 60 * 60;
+  const signer = new AWS.CloudFront.Signer(KEY_PAIR_ID!, privateKeyString);
+  const signedCookies = signer.getSignedCookie({
+    url: `https://asset.${DOMAIN_NAME}/*`,
+    expires,
+  });
+
   const cookies: string[] = [];
-  for (var cookieId in signedCookies) {
-    cookies.push(
-      `${cookieId}=${signedCookies[cookieId]};Domain=${DOMAIN_NAME};HttpOnly;Secure;SameSite=None`
-    );
-  }
+  cookies.push(
+    `CloudFront-Expires=${signedCookies["CloudFront-Expires"]};Domain=${DOMAIN_NAME};HttpOnly;Secure;SameSite=None`
+  );
+  cookies.push(
+    `CloudFront-Key-Pair-Id=${signedCookies["CloudFront-Key-Pair-Id"]};Domain=${DOMAIN_NAME};HttpOnly;Secure;SameSite=None`
+  );
+  cookies.push(
+    `CloudFront-Signature=${signedCookies["CloudFront-Signature"]};Domain=${DOMAIN_NAME};HttpOnly;Secure;SameSite=None`
+  );
 
   return {
     statusCode: 200,
